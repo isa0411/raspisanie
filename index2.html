@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Расписание колледжа</title>
+<style>
+:root{--bg:#f6f6f9;--fg:#1c1c28;--card:#fff;--mut:#6b6b80;--ln:#e3e3ec;--ac:#4f46e5;--bad:#d33;--acfg:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14141c;--fg:#ececf4;--card:#1f1f2b;--mut:#9a9ab0;--ln:#33334a;--ac:#8b85ff;--bad:#ff6b6b;--acfg:#14141c}}
+:root[data-theme="dark"]{--bg:#14141c;--fg:#ececf4;--card:#1f1f2b;--mut:#9a9ab0;--ln:#33334a;--ac:#8b85ff;--bad:#ff6b6b;--acfg:#14141c}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--card);z-index:10}
+header{position:sticky;top:env(safe-area-inset-top,0px);background:var(--card);border-bottom:1px solid var(--ln);z-index:9;display:flex;overflow-x:auto}
+header button{flex:1;border:0;background:none;color:var(--mut);padding:13px 10px;font:inherit;white-space:nowrap;border-bottom:3px solid transparent}
+header button.on{color:var(--ac);border-color:var(--ac);font-weight:600}
+main{max-width:720px;margin:0 auto;padding:12px 12px 90px}
+.row{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}
+button,select,input{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--ln);border-radius:10px;padding:9px 12px}
+.row>button,.row>select,.row>input{flex:1}
+button.on,button.pri{background:var(--ac);color:var(--acfg);border-color:var(--ac)}
+button.pri{width:100%;margin:6px 0;font-weight:600}
+select,input{width:100%}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:10px 12px;margin:10px 0}
+.card h3{margin:0 0 6px;font-size:15px}
+.sl{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--ln);align-items:center}
+.sl:first-of-type{border-top:0}
+.sl b{width:22px;color:var(--mut);font-weight:500}
+.sl span{flex:1}.sl small{color:var(--mut)}
+.em{color:var(--mut);opacity:.6}
+.note{background:var(--card);border-left:4px solid var(--bad);padding:8px 12px;border-radius:8px;margin:8px 0;white-space:pre-line}
+.chip{display:inline-flex;gap:6px;align-items:center;background:var(--bg);border:1px solid var(--ln);border-radius:20px;padding:3px 6px 3px 10px;margin:3px 3px 0 0;font-size:13px}
+.chip i{font-style:normal;color:var(--bad);cursor:pointer;padding:0 4px}
+.bar{height:6px;border-radius:3px;background:var(--ln);margin:6px 0}.bar div{height:100%;border-radius:3px;background:var(--ac)}
+.fr{display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--ln)}.fr span{flex:1}.fr input{width:72px}
+.x{color:var(--bad);border:0;background:none;padding:6px}
+.sheet{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--ln);border-radius:18px 18px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));z-index:20;box-shadow:0 -8px 30px #0004}
+.sheet label{display:block;color:var(--mut);font-size:13px;margin-top:8px}
+</style>
+</head>
+<body>
+<header id="tabs"></header>
+<main id="app"></main>
+<script>
+const DAYS=["Пн","Вт","Ср","Чт","Пт","Сб"];
+const P=s=>Object.fromEntries(s.split(",").map(x=>{const a=x.split(":");return[a[0],+a[1]]}));
+function def(){
+const r1=P("Математика:2,Физика:2,Информатика:2,Литература:1,Химия:1,Русский язык:1,Английский:2,История:1,Физ-ра:1,География:1,Индивидуальный проект:0.5,Конфигурация Windows:0.5,Интернет-маркетинг:1");
+const g1=P("Математика:1,Физика:1,Русский язык:1,Литература:1,Английский:2,История:1,Физ-ра:2,Биология:1,Информатика:2,Обществознание:2,Индивидуальный проект:0.5,Illustrator:1.5,Навигационный и экологический дизайн:1");
+const r2=P("История:1,Английский:2,Физ-ра:1,Разработка программных модулей:4,Тестирование:1,Разработка мобильных приложений:3,C++:6");
+const g2=P("Основы рисунка:2,Дизайн интерьера:3,ТЗ на графический дизайн:6,Дизайн-проектирование:7");
+const r3=P("Английский:2,Физ-ра:2,HTML-CSS-JS:6,Разработка ПО:2,Инструментальные средства разработки:2,Мат.моделирование:2,Поддержка комп.систем:2,Обеспечение качества функционирования компьютерных систем:6");
+const g3=P("Английский:2,Многостраничный дизайн:3,Дизайн упаковки:5,Maya 3D:2,ZBrush:1,Adobe Premiere:2,Сборка дизайна:2");
+const G={};
+for(const i of[1,2,3]){G["1-РПО"+i]={...r1};G["1-ГД"+i]={...g1}}
+for(const i of[1,2]){G["2-РПО"+i]={...r2};G["2-ГД"+i]={...g2}}
+G["3-РПО"]={...r3};G["3-ГД"]={...g3};
+const OQ="Обеспечение качества функционирования компьютерных систем";
+const T={"Бунед":["Физика","Математика","Мат.моделирование"],"Влад":["C++","HTML-CSS-JS","Поддержка комп.систем",OQ],
+"Артемий":["Разработка программных модулей","Разработка мобильных приложений","Тестирование","Поддержка комп.систем",OQ],
+"Максим":["Информатика"],"Али":["Биология"],"Татьяна":["Английский"],"Ольшанская":["Интернет-маркетинг","Maya 3D","ZBrush","Adobe Premiere"],
+"Тамара":["Русский язык","Литература"],"Юлия Вячеславовна":["Химия"],"Марина":["История","Обществознание","География"],
+"Парвиз":["Индивидуальный проект","Конфигурация Windows"],"Вера":["Физ-ра"],"Анна":["Illustrator","Основы рисунка"],
+"Юлия":["Навигационный и экологический дизайн","Индивидуальный проект","ТЗ на графический дизайн","Дизайн-проектирование","Дизайн интерьера","Многостраничный дизайн","Сборка дизайна"],
+"Данил":["ZBrush","Adobe Premiere"]};
+return{days:5,slots:6,groups:G,teachers:T,sched:{}}}
+let S;try{S=JSON.parse(localStorage.getItem("sch-v1"))}catch(e){}
+if(!S||!S.groups)S=def();
+const save=()=>{try{localStorage.setItem("sch-v1",JSON.stringify(S))}catch(e){}};
+const norm=s=>s.trim().toLowerCase(),cnt=f=>Math.max(1,Math.round(f*2));
+const tf=sub=>Object.keys(S.teachers).filter(t=>S.teachers[t].some(x=>norm(x)===norm(sub)));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const K=(w,d,s)=>w+"."+d+"."+s;
+let ui={tab:"sch",mode:"g",name:"",w:0,ed:null,gsel:"",msg:""};
+
+function attempt(){
+const D=S.days,N=S.slots,G=Object.keys(S.groups),sc={},gb={},tb={},td={},tt={};
+G.forEach(g=>{sc[g]={};gb[g]=new Set()});
+Object.keys(S.teachers).forEach(t=>{tb[t]=new Set();tt[t]=0});
+const put=(g,w,d,s,sub,t,l)=>{const k=K(w,d,s);sc[g][k]={s:sub,t,l};gb[g].add(k);if(t&&tb[t]){tb[t].add(k);const q=t+"|"+w+d;td[q]=(td[q]||0)+1;tt[t]++}};
+const lk={};
+for(const g of G)for(const[k,e]of Object.entries(S.sched[g]||{}))if(e.l){const[w,d,s]=k.split(".").map(Number);if(d<D&&s<N&&S.groups[g][e.s]!==undefined){put(g,w,d,s,e.s,e.t,1);const q=g+norm(e.s);lk[q]=(lk[q]||0)+1}}
+const tasks=[];
+for(const g of G)for(const[sub,f]of Object.entries(S.groups[g])){const need=cnt(f)-(lk[g+norm(sub)]||0),st=Math.random()<.5?0:1;for(let i=0;i<need;i++)tasks.push({g,sub,f,w:(st+i)%2})}
+tasks.sort(()=>Math.random()-.5);tasks.sort((a,b)=>(tf(a.sub).length||99)-(tf(b.sub).length||99));
+const un=[];let tot=0;
+for(const{g,sub,f,w}of tasks){
+const lim=f>=3?2:1,ct=tf(sub).length?tf(sub):[null];let best=null;
+for(let d=0;d<D;d++){
+const mine=[];for(let s=0;s<N;s++)if(gb[g].has(K(w,d,s)))mine.push(s);
+let same=0;for(const[k,e]of Object.entries(sc[g]))if(e.s===sub&&k.startsWith(w+"."+d+"."))same++;
+if(same>=lim)continue;
+for(let s=0;s<N;s++){if(gb[g].has(K(w,d,s)))continue;
+const gap=mine.length?(mine.some(x=>Math.abs(s-x)==1)?0:8*(Math.min(...mine.map(x=>Math.abs(s-x)))-1)):2*s+3;
+for(const t of ct){if(t&&tb[t].has(K(w,d,s)))continue;
+let c=gap+4*mine.length+6*same+Math.random()*3;if(t)c+=1.5*(td[t+"|"+w+d]||0)+.3*tt[t];
+if(!best||c<best.c)best={c,d,s,t}}}}
+if(!best)un.push(g+": "+sub);else{tot+=best.c;put(g,w,best.d,best.s,sub,best.t,0)}}
+return{sc,un,tot}}
+
+function gen(){let b=null;for(let i=0;i<25;i++){const r=attempt();if(!b||r.un.length<b.un.length||(r.un.length==b.un.length&&r.tot<b.tot))b=r}
+S.sched=b.sc;const m={};b.un.forEach(x=>m[x]=(m[x]||0)+1);
+ui.msg=b.un.length?"Не удалось поставить "+b.un.length+" пар (скорее всего, перегрузка преподавателя):\n"+Object.entries(m).map(([k,v])=>k+" ×"+v).join("\n"):"";save()}
+
+function busy(t,g,w,d,s){if(!t)return"";for(const g2 in S.sched){if(g2===g)continue;const e=S.sched[g2][K(w,d,s)];if(e&&e.t===t)return g2}return""}
+function check(){const er=[],seen={};
+for(const g in S.groups){const L=S.sched[g]||{},have={};
+for(const[k,e]of Object.entries(L)){have[norm(e.s)]=(have[norm(e.s)]||0)+1;if(e.t){const q=e.t+"@"+k;(seen[q]=seen[q]||[]).push(g)}}
+for(const[s,f]of Object.entries(S.groups[g])){const n=have[norm(s)]||0;if(n!==cnt(f))er.push(g+": «"+s+"» — "+n+" из "+cnt(f)+" пар за 2 недели")}
+if(Object.values(L).some(e=>!e.t))er.push(g+": есть пары без преподавателя")}
+for(const[q,gs]of Object.entries(seen))if(gs.length>1){const[t,k]=q.split("@"),[w,d,s]=k.split(".");er.push("Конфликт: "+t+" у "+gs.join(", ")+" (нед. "+(+w+1)+", "+DAYS[d]+", пара "+(+s+1)+")")}
+return er}
+function load(){const L={};for(const t in S.teachers)L[t]=0;const orph=new Set();
+for(const g in S.groups)for(const[s,f]of Object.entries(S.groups[g])){const ts=tf(s);if(!ts.length)orph.add(s);ts.forEach(t=>L[t]+=f/ts.length)}
+return{L,orph:[...orph]}}
+
+function vSch(){
+const names=Object.keys(ui.mode=="g"?S.groups:S.teachers);if(!names.includes(ui.name))ui.name=names[0]||"";
+let h=`<div class=row><button class="${ui.mode=="g"?"on":""}" data-a=mode data-x=g>Группы</button><button class="${ui.mode=="t"?"on":""}" data-a=mode data-x=t>Преподаватели</button></div>
+<select data-a=name>${names.map(n=>`<option ${n==ui.name?"selected":""}>${esc(n)}</option>`).join("")}</select>
+<div class=row><button class="${ui.w==0?"on":""}" data-a=wk data-x=0>Неделя 1</button><button class="${ui.w==1?"on":""}" data-a=wk data-x=1>Неделя 2</button></div>
+<button class=pri data-a=gen>Сгенерировать расписание</button>`;
+
+for(let d=0;d<S.days;d++){let rows="";
+for(let s=0;s<S.slots;s++){
+if(ui.mode=="g"){const e=(S.sched[ui.name]||{})[K(ui.w,d,s)];
+rows+=`<div class=sl data-a=ed data-d=${d} data-s=${s}><b>${s+1}</b>${e?`<span>${esc(e.s)}<br><small>${esc(e.t||"нет преподавателя")}${e.l?" 🔒":""}</small></span>`:`<span class=em>＋ добавить</span>`}</div>`}
+else for(const g in S.sched){const e=S.sched[g][K(ui.w,d,s)];if(e&&e.t===ui.name)rows+=`<div class=sl><b>${s+1}</b><span>${esc(e.s)}<br><small>${esc(g)}</small></span></div>`}}
+h+=`<div class=card><h3>${DAYS[d]}</h3>${rows||'<span class=em>—</span>'}</div>`}
+return h}
+
+function sheet(){const e=ui.ed;if(!e)return"";const subs=Object.keys(S.groups[e.g]||{}),ts=tf(e.sub),all=Object.keys(S.teachers),opts=[...ts,...all.filter(t=>!ts.includes(t))];
+return`<div class=sheet><b>${esc(e.g)} · ${DAYS[e.d]}, пара ${e.s+1}</b>
+<label>Предмет</label><select data-a=esub>${subs.map(s=>`<option ${s==e.sub?"selected":""}>${esc(s)}</option>`).join("")}</select>
+<label>Преподаватель</label><select data-a=et><option value="">— без преподавателя —</option>${opts.map(t=>{const b=busy(t,e.g,e.w,e.d,e.s);return`<option value="${esc(t)}" ${t==e.t?"selected":""}>${esc(t)}${b?" (занят: "+esc(b)+")":""}</option>`}).join("")}</select>
+<div class=row><button class=on data-a=eset>Поставить</button><button data-a=eclr>Убрать</button><button data-a=ecan>Отмена</button></div></div>`}
+
+function vGrp(){const names=Object.keys(S.groups);if(!names.includes(ui.gsel))ui.gsel=names[0]||"";const sub=S.groups[ui.gsel]||{};
+return`<select data-a=gsel>${names.map(n=>`<option ${n==ui.gsel?"selected":""}>${esc(n)}</option>`).join("")}</select>
+<div class=card><h3>Предметы (раз в неделю)</h3>${Object.entries(sub).map(([s,f])=>`<div class=fr><span>${esc(s)}<br><small class=em>${esc(tf(s).join(", ")||"НЕТ ПРЕПОДАВАТЕЛЯ")}</small></span><input type=number step=0.5 min=0.5 value=${f} data-a=freq data-x="${esc(s)}"><button class=x data-a=dsub data-x="${esc(s)}">✕</button></div>`).join("")}
+<div class=row><input id=ns placeholder="Новый предмет"><input id=nf type=number step=0.5 value=1 style="max-width:80px"><button data-a=asub>＋</button></div></div>
+<div class=card><h3>Группа</h3><div class=row><input id=ng placeholder="Название новой группы"><select id=nc><option value="">пустая</option>${names.map(n=>`<option>${esc(n)}</option>`).join("")}</select></div>
+<div class=row><button data-a=agrp>Добавить группу</button><button class=x data-a=dgrp>Удалить «${esc(ui.gsel)}»</button></div></div>`}
+
+function vTea(){const{L,orph}=load(),cap=S.days*S.slots,all=[...new Set(Object.values(S.groups).flatMap(g=>Object.keys(g)))];
+return`<datalist id=dl>${all.map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
+<div class=row><input id=nt placeholder="Имя нового преподавателя"><button data-a=atea>Добавить</button></div>
+${orph.length?`<div class=note>Предметы без преподавателя: ${esc(orph.join(", "))}</div>`:""}
+${Object.entries(S.teachers).map(([t,ss])=>`<div class=card><h3>${esc(t)} <small class=em>— ${L[t].toFixed(1)} из ${cap} пар/нед.${L[t]>cap?" ⚠ перегрузка":""}</small></h3>
+<div class=bar><div style="width:${Math.min(100,L[t]/cap*100)}%;${L[t]>cap?"background:var(--bad)":""}"></div></div>
+${ss.map((s,i)=>`<span class=chip>${esc(s)}<i data-a=rsub data-x="${esc(t)}" data-i=${i}>✕</i></span>`).join("")}
+<div class=row><input list=dl id="as-${esc(t)}" placeholder="Добавить предмет"><button data-a=asubt data-x="${esc(t)}">＋</button><button class=x data-a=dtea data-x="${esc(t)}">Удалить</button></div></div>`).join("")}`}
+
+function vChk(){const er=check();
+return`<button class=pri data-a=chk>Проверить расписание</button>
+${ui.chk?(er.length?`<div class=note>${esc(er.join("\n"))}</div>`:`<div class=card>✔ Конфликтов нет, все пары на месте</div>`):""}
+<div class=card><h3>Настройки</h3><label>Дней в неделю (1–6)</label><input type=number min=1 max=6 value=${S.days} data-a=days>
+<label>Пар в день (1–10)</label><input type=number min=1 max=10 value=${S.slots} data-a=slots></div>
+<button class=x data-a=reset>Сбросить всё к начальным данным</button>`}
+
+function render(){
+const T=[["sch","Расписание"],["grp","Группы"],["tea","Преподаватели"],["chk","Проверка"]];
+document.getElementById("tabs").innerHTML=T.map(([k,n])=>`<button class="${ui.tab==k?"on":""}" data-a=tab data-x=${k}>${n}</button>`).join("");
+document.getElementById("app").innerHTML=({sch:vSch,grp:vGrp,tea:vTea,chk:vChk})[ui.tab]()+sheet()}
+
+function act(a,x,el){
+const v=id=>document.getElementById(id).value.trim();
+switch(a){
+case"tab":ui.tab=x;ui.ed=null;ui.chk=0;break;
+case"mode":ui.mode=x;break;case"name":ui.name=el.value;break;case"wk":ui.w=+x;break;
+case"gen":gen();break;
+case"cm":ui.msg="";break;
+case"ed":{const d=+el.dataset.d,s=+el.dataset.s,g=ui.name,e=(S.sched[g]||{})[K(ui.w,d,s)],sub=e?e.s:Object.keys(S.groups[g])[0];
+if(!sub)return;ui.ed={g,w:ui.w,d,s,sub,t:e?e.t:(tf(sub)[0]||null)};break}
+case"esub":ui.ed.sub=el.value;ui.ed.t=tf(el.value)[0]||null;break;
+case"et":ui.ed.t=el.value||null;break;
+case"ecan":ui.ed=null;break;
+case"eclr":{const e=ui.ed;delete (S.sched[e.g]||{})[K(e.w,e.d,e.s)];ui.ed=null;save();break}
+case"eset":{const e=ui.ed,b=busy(e.t,e.g,e.w,e.d,e.s);if(b&&!confirm(e.t+" в это время занят у "+b+". Всё равно поставить?"))return;
+(S.sched[e.g]=S.sched[e.g]||{})[K(e.w,e.d,e.s)]={s:e.sub,t:e.t,l:1};ui.ed=null;save();break}
+case"gsel":ui.gsel=el.value;break;
+case"freq":{const f=parseFloat(el.value);if(f>0){S.groups[ui.gsel][x]=f;save()}break}
+case"dsub":delete S.groups[ui.gsel][x];for(const k in S.sched[ui.gsel]||{})if(S.sched[ui.gsel][k].s===x)delete S.sched[ui.gsel][k];save();break;
+case"asub":{const n=v("ns"),f=parseFloat(v("nf"));if(n&&f>0){S.groups[ui.gsel][n]=f;save()}break}
+case"agrp":{const n=v("ng"),c=v("nc");if(n&&!S.groups[n]){S.groups[n]=c?{...S.groups[c]}:{};ui.gsel=n;save()}break}
+case"dgrp":if(confirm("Удалить группу "+ui.gsel+"?")){delete S.groups[ui.gsel];delete S.sched[ui.gsel];save()}break;
+case"atea":{const n=v("nt");if(n&&!S.teachers[n]){S.teachers[n]=[];save()}break}
+case"dtea":if(confirm("Удалить преподавателя "+x+"?")){delete S.teachers[x];for(const g in S.sched)for(const k in S.sched[g])if(S.sched[g][k].t===x)S.sched[g][k].t=null;save()}break;
+case"rsub":S.teachers[x].splice(+el.dataset.i,1);save();break;
+case"asubt":{const n=document.getElementById("as-"+x).value.trim();if(n&&!S.teachers[x].some(y=>norm(y)===norm(n))){S.teachers[x].push(n);save()}break}
+case"chk":ui.chk=1;break;
+case"days":S.days=Math.max(1,Math.min(6,+el.value||5));save();break;
+case"slots":S.slots=Math.max(1,Math.min(10,+el.value||6));save();break;
+case"reset":if(confirm("Сбросить все данные?")){S=def();gen();}break}
+render()}
+const app=document.body;
+app.addEventListener("click",ev=>{const el=ev.target.closest("[data-a]");if(!el||/^(SELECT|INPUT)$/.test(el.tagName))return;act(el.dataset.a,el.dataset.x,el)});
+app.addEventListener("change",ev=>{const el=ev.target.closest("[data-a]");if(el&&/^(SELECT|INPUT)$/.test(el.tagName))act(el.dataset.a,el.dataset.x,el)});
+if(!Object.keys(S.sched).length)gen();
+render();
+</script>
+</body>
+</html>
